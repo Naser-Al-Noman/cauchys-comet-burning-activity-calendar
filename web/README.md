@@ -16,8 +16,14 @@ python -m http.server 8080 --directory web
 
 Open http://localhost:8080/
 
-## Refresh demo JSON
+## Deploy on Vercel
 
-```text
-python -m src.compute.critical --baseline cache/viirs_march_week_of_year_baseline.csv --scored cache/viirs_march_weekly_scored.csv --prefix viirs_march --export-json web/data/demo_calendar.json
-```
+No backend is required. Host this folder as a static site:
+
+1. Import the GitHub repo in Vercel.
+2. Set **Root Directory** to `web`.
+3. Leave **Build Command** empty; **Output Directory** can stay default / `.`.
+
+[`vercel.json`](vercel.json) enables clean URLs and short caching for `/data/*`.
+
+Do not add `FIRMS_MAP_KEY` or Python acquire/compute as Vercel serverless for this demo — refresh `data/demo_calendar.json` locally (or in CI) and commit when you want the public site updated.
