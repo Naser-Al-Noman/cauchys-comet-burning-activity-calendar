@@ -20,7 +20,28 @@ We plan to use NASA FIRMS (MODIS and VIIRS), MODIS MCD64A1 burned area for valid
 
 ## Project status
 
-This repository is a **concept-stage proposal** for Team Cauchy's Comet in the [NASA International Space Apps Challenge 2026](https://www.spaceappschallenge.org/) (Bangladesh), challenge **“Harmonization of MODIS and VIIRS Hot Spots.”** Nothing here is a working product yet: there is no deployed app, no finished pipeline, and no reported results. Descriptions of method, data, and software layout are plans for work we intend to do during the challenge.
+This repository is a **concept-stage proposal** for Team Cauchy's Comet in the [NASA International Space Apps Challenge 2026](https://www.spaceappschallenge.org/) (Bangladesh), challenge **“Harmonization of MODIS and VIIRS Hot Spots.”** It is not a finished product: there is no deployed app, no sensor calibration or validation results, and no reported performance metrics. Early FIRMS download and weekly-grid scaffolding live under `src/acquire` and `src/compute`; the calendar UI is still planned.
+
+## Getting started (data download)
+
+1. Request a free [FIRMS MAP_KEY](https://firms.modaps.eosdis.nasa.gov/api/map_key).
+2. Copy `.env.example` to `.env` and set `FIRMS_MAP_KEY`.
+3. `pip install -r requirements.txt`
+4. Download a short window for Bangladesh, for example:
+
+```text
+python -m src.acquire --source VIIRS_SNPP_NRT --days 3
+```
+
+See [src/acquire/README.md](src/acquire/README.md). Downloads are written to `cache/` (gitignored).
+
+Clean and aggregate (weekly ~5.5 km cell-days):
+
+```text
+python -m src.compute --input demo_fixtures/synthetic_firms_bangladesh.csv --source VIIRS_SNPP_NRT
+```
+
+See [src/compute/README.md](src/compute/README.md). The demo CSV is synthetic for pipeline testing only, not real fire observations.
 
 ## Team
 
@@ -30,6 +51,8 @@ All team members are from Bangladesh:
 - Zaid Rehman
 - Sadman Zaman Khan
 - Muhammad Junayed
+- Md. Meheraj Hossain
+- Israt Jahan Lamia
 
 ## Data credit
 
