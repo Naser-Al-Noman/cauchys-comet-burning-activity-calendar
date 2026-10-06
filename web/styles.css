@@ -223,6 +223,7 @@ main {
   .split {
     grid-template-columns: 1fr 1fr;
   }
+
 }
 
 .critical-list,
