@@ -30,6 +30,8 @@ All team members are from Bangladesh:
 - Zaid Rehman
 - Sadman Zaman Khan
 - Muhammad Junayed
+- Md. Meheraj Hossain
+- Israt Jahan Lamia
 
 ## Data credit
 
