@@ -1,6 +1,10 @@
 # Computation pipeline
 
-Cleans FIRMS-style detection CSVs and aggregates them to a weekly ~5.5 km grid (method steps 1–2). Calibration, baselines, and validation are not implemented yet.
+Cleans FIRMS-style detection CSVs, aggregates them to a weekly ~5.5 km grid
+(method steps 1–2), and can quantile-map MODIS weekly cells to VIIRS on
+overlapping cell-weeks (step 3). Baselines, anomalies, and validation are not
+implemented yet. Calibration output is experimental scaffolding, not a claimed
+accuracy result.
 
 ## Confidence mapping
 
@@ -22,4 +26,14 @@ python -m src.compute --input demo_fixtures/synthetic_firms_bangladesh.csv --sou
 
 Writes `*_cleaned.csv` and `*_weekly_cells.csv` under `cache/` by default.
 
-Use a real download from `src.acquire` the same way once `FIRMS_MAP_KEY` is set.
+### Calibration (MODIS → VIIRS)
+
+After building weekly tables for both sensors over the same period:
+
+```text
+python -m src.compute --input cache/bangladesh_VIIRS_SNPP_SP_2024-03-01_2024-03-31_merged.csv --source VIIRS_SNPP_SP
+python -m src.compute --input cache/bangladesh_MODIS_SP_2024-03-01_2024-03-31_merged.csv --source MODIS_SP
+python -m src.compute.calibrate --modis-weekly cache/bangladesh_MODIS_SP_2024-03-01_2024-03-31_merged_weekly_cells.csv --viirs-weekly cache/bangladesh_VIIRS_SNPP_SP_2024-03-01_2024-03-31_merged_weekly_cells.csv
+```
+
+Season labels used when fitting: `dry` (Nov–Feb), `pre_monsoon` (Mar–May), `monsoon` (Jun–Oct). Season-specific maps are fit only when enough overlap pairs exist; otherwise a global map is used.
