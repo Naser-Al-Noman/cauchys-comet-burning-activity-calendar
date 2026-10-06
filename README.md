@@ -33,6 +33,12 @@ This repository is a **concept-stage proposal** for Team Cauchy's Comet in the [
 python -m src.acquire --source VIIRS_SNPP_NRT --days 3
 ```
 
+Historical range (5-day chunks, merged CSV under `cache/`):
+
+```text
+python -m src.acquire --source VIIRS_SNPP_SP --start 2024-03-01 --end 2024-03-15
+```
+
 See [src/acquire/README.md](src/acquire/README.md). Downloads are written to `cache/` (gitignored).
 
 Clean and aggregate (weekly ~5.5 km cell-days):
