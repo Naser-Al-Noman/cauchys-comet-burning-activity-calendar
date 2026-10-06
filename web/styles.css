@@ -1,0 +1,274 @@
+:root {
+  --ink: #1a1512;
+  --ash: #2c2420;
+  --ember: #e07a3d;
+  --coal: #0f0d0c;
+  --smoke: #c9b8a8;
+  --paper: #f3ebe3;
+  --line: rgba(243, 235, 227, 0.14);
+  --glow: rgba(224, 122, 61, 0.35);
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Sora", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--paper);
+  font-family: var(--font-body);
+  background: var(--coal);
+  line-height: 1.55;
+}
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(224, 122, 61, 0.28), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 30%, rgba(90, 40, 20, 0.45), transparent 50%),
+    linear-gradient(165deg, #1c1410 0%, #0f0d0c 45%, #18120f 100%);
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from {
+    filter: hue-rotate(0deg) saturate(1);
+  }
+  to {
+    filter: hue-rotate(-8deg) saturate(1.08);
+  }
+}
+
+.hero {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: clamp(3.5rem, 12vh, 7rem) 1.5rem 3rem;
+  text-align: left;
+  animation: rise 0.9s ease-out both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--smoke);
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.8rem, 9vw, 5.25rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--paper);
+  text-shadow: 0 0 40px var(--glow);
+}
+
+.tagline {
+  margin: 0.75rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 500;
+  color: var(--ember);
+}
+
+.lede {
+  margin: 1.5rem 0 0;
+  max-width: 36rem;
+  color: var(--smoke);
+  font-size: 1.05rem;
+}
+
+.status {
+  margin: 1.25rem 0 0;
+  display: inline-block;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--ember);
+  color: var(--paper);
+  font-size: 0.9rem;
+}
+
+main {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  display: grid;
+  gap: 2.5rem;
+}
+
+.panel {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+  animation: rise 0.8s ease-out both;
+  animation-delay: 0.15s;
+}
+
+.panel h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 1.85rem);
+  font-weight: 500;
+}
+
+.panel h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--smoke);
+  font-weight: 600;
+}
+
+.section-note {
+  margin: 0 0 1.25rem;
+  color: var(--smoke);
+  max-width: 40rem;
+  font-size: 0.95rem;
+}
+
+.chart {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 3.5rem;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.bar-row span {
+  font-size: 0.85rem;
+  color: var(--smoke);
+}
+
+.bar-track {
+  height: 0.7rem;
+  background: rgba(243, 235, 227, 0.08);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #a84a24, var(--ember));
+  transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bar-fill.is-anomaly-high {
+  background: linear-gradient(90deg, #b42318, #f0a060);
+}
+
+.bar-fill.is-anomaly-low {
+  background: linear-gradient(90deg, #3d4a55, #8fa0ad);
+}
+
+.year-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.year-controls button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.year-controls button:hover,
+.year-controls button[aria-pressed="true"] {
+  border-color: var(--ember);
+  background: rgba(224, 122, 61, 0.12);
+  color: var(--ember);
+}
+
+.split {
+  display: grid;
+  gap: 2rem;
+}
+
+@media (min-width: 720px) {
+  .split {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.critical-list,
+.peak-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.critical-list li,
+.peak-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+
+.critical-list strong,
+.peak-list strong {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.slope {
+  margin: 1rem 0 0;
+  color: var(--smoke);
+  font-size: 0.9rem;
+}
+
+.site-footer {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  border-top: 1px solid var(--line);
+  color: var(--smoke);
+  font-size: 0.85rem;
+}
+
+.site-footer p {
+  margin: 0 0 0.5rem;
+}
+
+.error {
+  color: #f0a060;
+}

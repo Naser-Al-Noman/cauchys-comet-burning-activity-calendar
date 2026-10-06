@@ -20,7 +20,7 @@ We plan to use NASA FIRMS (MODIS and VIIRS), MODIS MCD64A1 burned area for valid
 
 ## Project status
 
-This repository is a **concept-stage proposal** for Team Cauchy's Comet in the [NASA International Space Apps Challenge 2026](https://www.spaceappschallenge.org/) (Bangladesh), challenge **“Harmonization of MODIS and VIIRS Hot Spots.”** It is not a finished product: there is no deployed app and no reported performance metrics. Early FIRMS download, weekly-grid aggregation, experimental MODIS→VIIRS quantile mapping, and regional week-of-year baseline/anomaly scaffolding live under `src/acquire` and `src/compute`. Critical-period ranking, formal validation, and the calendar UI are still planned.
+This repository is a **concept-stage proposal** for Team Cauchy's Comet in the [NASA International Space Apps Challenge 2026](https://www.spaceappschallenge.org/) (Bangladesh), challenge **“Harmonization of MODIS and VIIRS Hot Spots.”** It is not a finished product and reports no performance metrics. Pipeline scaffolding covers FIRMS download, weekly grids, experimental MODIS→VIIRS calibration, regional baselines/anomalies, and critical-period ranking, plus a static web demo under `web/`. Formal validation (held-out years, MCD64A1) and a full-year harmonized archive remain planned.
 
 ## Getting started (data download)
 
@@ -59,7 +59,16 @@ Regional week-of-year baseline + anomaly scores (pass multi-year weekly cell CSV
 python -m src.compute.baseline --weekly cache/<y1>_weekly_cells.csv cache/<y2>_weekly_cells.csv --prefix viirs_march
 ```
 
-See [src/compute/README.md](src/compute/README.md). The demo CSV is synthetic for pipeline testing only, not real fire observations. Local `cache/` downloads are gitignored and are not published results.
+Critical periods + web demo JSON:
+
+```text
+python -m src.compute.critical --baseline cache/viirs_march_week_of_year_baseline.csv --scored cache/viirs_march_weekly_scored.csv --prefix viirs_march --export-json web/data/demo_calendar.json
+python -m http.server 8080 --directory web
+```
+
+Open http://localhost:8080/ — see [web/README.md](web/README.md).
+
+See [src/compute/README.md](src/compute/README.md). The demo CSV is synthetic for pipeline testing only, not real fire observations. Local `cache/` downloads are gitignored and are not published results. The committed `web/data/demo_calendar.json` is a March-only concept extract from VIIRS processing, labeled as such in the UI.
 
 ## Team
 

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cauchy's Comet — Burning Activity Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Sora:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <header class="hero">
+      <p class="eyebrow">NASA Space Apps 2026 · Bangladesh · Concept demo</p>
+      <h1 class="brand">Cauchy's Comet</h1>
+      <p class="tagline">The Burning Activity Calendar</p>
+      <p class="lede">
+        A calendar view of when Bangladesh typically shows hot-spot activity,
+        which weeks look unusual, and which March periods are most critical —
+        built from NASA FIRMS VIIRS detections (demo extract only).
+      </p>
+      <p class="status" id="status-line">Loading demo data…</p>
+    </header>
+
+    <main>
+      <section class="panel" id="baseline-section" aria-labelledby="baseline-title">
+        <h2 id="baseline-title">When does this area normally burn?</h2>
+        <p class="section-note">
+          Week-of-year median activity (p50) for March ISO weeks, 2020–2024
+          VIIRS SNPP. Bars show typical regional active cell-days.
+        </p>
+        <div class="chart" id="baseline-chart" role="img" aria-label="Baseline by ISO week"></div>
+      </section>
+
+      <section class="panel" id="anomaly-section" aria-labelledby="anomaly-title">
+        <h2 id="anomaly-title">Is this week unusual?</h2>
+        <p class="section-note">
+          Choose a year. Anomaly score compares that week to the multi-year
+          median band for the same ISO week.
+        </p>
+        <div class="year-controls" id="year-controls" role="group" aria-label="Year"></div>
+        <div class="chart" id="anomaly-chart"></div>
+      </section>
+
+      <section class="panel" id="critical-section" aria-labelledby="critical-title">
+        <h2 id="critical-title">Which periods are critical, and are they shifting?</h2>
+        <p class="section-note">
+          Critical ranks use multi-year median activity. Peak timing lists each
+          year’s busiest March ISO week in this extract.
+        </p>
+        <div class="split">
+          <div>
+            <h3>Critical ISO weeks</h3>
+            <ol class="critical-list" id="critical-list"></ol>
+          </div>
+          <div>
+            <h3>Peak week by year</h3>
+            <ul class="peak-list" id="peak-list"></ul>
+            <p class="slope" id="peak-slope"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p id="credit">Data: NASA FIRMS (MODIS, VIIRS)</p>
+      <p>
+        Team Cauchy's Comet · Concept-stage proposal · Not a validated fire
+        product · Hot spots ≠ burned area
+      </p>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

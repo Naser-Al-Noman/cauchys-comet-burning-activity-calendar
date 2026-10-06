@@ -47,3 +47,17 @@ python -m src.compute.baseline --weekly cache/<year1>_weekly_cells.csv cache/<ye
 Anomaly score is `(value - p50) / (0.5 * (p90 - p10))`. `percentile_rank` is the
 share of same-ISO-week samples that are ≤ the week’s value. Weeks with fewer
 than `--min-years` years are flagged via `enough_years=False`.
+
+### Critical periods and peak timing
+
+```text
+python -m src.compute.critical --baseline cache/viirs_march_week_of_year_baseline.csv --scored cache/viirs_march_weekly_scored.csv --prefix viirs_march --export-json web/data/demo_calendar.json
+```
+
+### Web demo
+
+```text
+python -m http.server 8080 --directory web
+```
+
+Then open http://localhost:8080/
