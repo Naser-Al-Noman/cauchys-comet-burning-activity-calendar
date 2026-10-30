@@ -1,41 +1,122 @@
-# Planned method
+# Method and implementation status
 
-This document describes the analysis and product logic we plan to implement. Nothing below has been run or validated in this repository yet.
+This document describes **what the repository implements today**, how each stage works, and known scientific limitations. Status labels:
 
-## 1. Clean detections and harmonize confidence
+| Label | Meaning |
+|-------|---------|
+| **Implemented and tested** | Code exists; covered by automated tests (Module 1+) |
+| **Implemented but experimental** | Code exists; not scientifically validated |
+| **Planned but not implemented** | Described in docs or README only |
+| **Not yet validated** | Implemented code with no independent accuracy checks |
 
-We will download MODIS and VIIRS active-fire detections from NASA FIRMS and apply consistent quality filters (for example, dropping clear duplicates and applying agreed confidence thresholds once we finalize them against the challenge requirements).
+## 1. Clean detections and harmonize confidence — **Implemented and tested**
 
-MODIS reports confidence on a 0–100 scale; VIIRS uses categorical levels (low, nominal, high). We will map both to a common ordinal or numeric confidence scale so that downstream aggregation treats the sensors consistently. The exact mapping will be documented in code when we implement it.
+**Code:** `src/compute/clean.py`, `src/compute/confidence.py`, CLI `python -m src.compute`
 
-## 2. Aggregate to a common grid
+- Loads FIRMS-shaped CSVs; requires `latitude`, `longitude`, `acq_date`, `confidence`.
+- MODIS numeric 0–100 → shared 0–1 scale; VIIRS `l`/`n`/`h` (and word forms) → 0.3 / 0.6 / 0.9.
+- Drops invalid coordinates, rows missing confidence after mapping, and exact duplicates on `(lat, lon, acq_date[, acq_time])`.
+- Default `--min-confidence` is **0.0** (no high-confidence filter unless the user sets one).
 
-We will aggregate detections to a shared spatial grid with cells of about 5.5 km and a weekly time step. Each cell-day will count at most once toward activity metrics (one detection flag per cell per day, regardless of how many raw points fall in that cell on that day). This grid will be the basis for calibration, baselines, and the calendar views.
+**Limitations (documented, not fixed in Module 2):**
 
-## 3. Calibrate MODIS against VIIRS
+- Confidence thresholds are not tuned against challenge requirements or independent validation.
+- MODIS and VIIRS confidence are harmonized ordinally, not proven equivalent for fire detection.
 
-For years when both MODIS and VIIRS collected data over the same region, we will calibrate MODIS-derived grid counts to match the distribution of VIIRS-derived counts. We plan to use quantile mapping applied separately by geographic region and season (for example, monsoon vs dry season), so that harmonized MODIS years are comparable to VIIRS years before we merge long-term records.
+## 2. Weekly spatial aggregation — **Implemented and tested**
 
-## 4. Week-of-year baseline and anomaly score
+**Code:** `src/compute/grid.py`
 
-On the harmonized weekly grid we will build a baseline for each cell (or for regional aggregates) by week of year, using historical years that pass our quality checks. The baseline will include percentile bands (for example, median and upper/lower tails). For a given week we will compute an anomaly score that compares observed activity to that baseline, so users can see whether a week is typical or unusual.
+- Fixed grid: **0.05°** cells (~5.5 km near the equator; smaller at Bangladesh latitudes).
+- Each **cell-day** counts at most once per week aggregation.
+- Temporal bucket: **ISO week** (`iso_year`, `iso_week`, `week_start` = Monday of that week).
+- Aggregation uses **`acq_date` only**; `acq_time` is not used for weekly grouping.
 
-## 5. Critical periods and shifting peaks
+**Limitations:**
 
-We will rank weeks or short windows that historically show the highest burning activity and label them as critical periods for planning and awareness. We will also track whether the timing of peak activity shifts over the record—for example, earlier or later peaks in recent decades—using the harmonized timeline only, with clear notes where record length differs pre- and post-VIIRS.
+- **Missing observations vs zero activity:** Weeks/cells with no detections are absent from the grid; they are not explicit zeros. Quiet periods can be indistinguishable from missing data (clouds, gaps, no overpass).
+- **Spatial resolution:** MODIS (~1 km) and VIIRS (~375 m) native resolutions differ; the shared 0.05° grid does not equalize detection sensitivity.
 
-## 6. Validation and limitations
+## 3. MODIS → VIIRS calibration — **Implemented but experimental / Not yet validated**
 
-We plan to validate the harmonized product in several ways:
+**Code:** `src/compute/calibrate.py`, CLI `python -m src.compute.calibrate`
 
-- **Sensor transition years:** Compare behavior in years when both MODIS and VIIRS were active, before and after applying calibration.
-- **Held-out years:** Reserve some years from calibration and test whether baselines and anomalies behave plausibly on those years.
-- **Burned area:** Compare detection-based metrics to MODIS MCD64A1 burned-area products where spatial and temporal overlap is meaningful.
+- Empirical **quantile mapping** on overlapping MODIS/VIIRS **cell-weeks**, with optional season splits (Bangladesh-oriented dry / pre_monsoon / monsoon).
+- Writes overlap table and `modis_weekly_cells_calibrated.csv`.
 
-We will state limitations explicitly in the product and documentation:
+**Limitations:**
 
-- Cloud cover and smoke can hide or confuse active-fire detections.
-- Small fires may be missed, especially at coarser effective resolution after aggregation.
-- Hot-spot detections indicate thermal anomalies at detection time; they are **not** the same as mapped burned area or fire intensity on the ground.
+- **Calibration leakage:** Models are fit on all overlapping pairs in the supplied files; there is no held-out year split in the current CLI.
+- Not used in the default offline synthetic pipeline (`calibration.status: not_applied`).
+- No reported accuracy metrics vs VIIRS or burned area.
 
-No validation results or accuracy numbers will be claimed until we have implemented the pipeline and completed those checks.
+## 4. Week-of-year baseline and anomaly score — **Implemented but experimental / Not yet validated**
+
+**Code:** `src/compute/baseline.py`, CLI `python -m src.compute.baseline`
+
+- Sums weekly cells to a **Bangladesh-wide** regional series (not per-cell baselines in the demo).
+- Baseline: p10 / p50 / p90 by **ISO week** across years in the input files.
+- Anomaly score: `(value - p50) / (0.5 * (p90 - p10))` with simple edge handling when p90 = p10.
+- `percentile_rank` is computed **in-sample** against the same years used to build the baseline.
+
+**Limitations:**
+
+- **Baseline in-sample scoring:** The same weeks used to define percentiles are also scored against them; this is not leave-one-year-out or held-out validation.
+- Weeks with fewer than `--min-years` years are flagged (`enough_years=False`) but still appear in outputs.
+
+## 5. Critical periods and peak timing — **Implemented but experimental**
+
+**Code:** `src/compute/critical.py`, CLI `python -m src.compute.critical`
+
+- Ranks ISO weeks by baseline **p50** (prefers weeks with `enough_years` when available).
+- Peak timing: busiest ISO week per year; optional descriptive slope of peak ISO week vs year (≥2 years).
+
+**Limitations:**
+
+- Descriptive only; not an operational fire warning.
+- Peak slope is easily misleading on short or seasonal extracts (e.g. March-only).
+
+## 6. Data acquisition — **Implemented and tested (download only)**
+
+**Code:** `src/acquire/` — FIRMS Area API client, Bangladesh bbox, batch merge to `cache/`
+
+- Requires `FIRMS_MAP_KEY` in environment or `.env` (never embedded in JSON exports).
+- Does not run in offline synthetic tests.
+
+## 7. Provenance and JSON export — **Implemented and tested (Module 2)**
+
+**Code:** `src/compute/provenance.py`, `export_demo_calendar_json` in `critical.py`
+
+- Calendar JSON includes `meta.provenance` with schema version, input SHA-256, processing config, classification (`synthetic` vs `real_firms_csv`), git commit when available, and timestamps.
+- Offline run also writes `{prefix}_provenance.json` beside CSV outputs.
+
+## 8. Static web demo — **Implemented (demo) / Not yet validated**
+
+**Code:** `web/` — reads committed `web/data/demo_calendar.json`
+
+- **March-only** ISO weeks in the committed demo extract (not a full-year calendar).
+- UI labels the product as concept-stage; hot spots ≠ burned area.
+- Frontend unchanged in Module 2; older JSON without `meta.provenance` remains valid.
+
+## 9. Validation — **Planned but not implemented**
+
+Not implemented in this repository:
+
+- Held-out years for calibration or baselines.
+- Comparison to **MODIS MCD64A1** burned area.
+- NASA POWER / GIBS ingestion.
+- Published accuracy or bias metrics.
+
+**Known gaps to state in any public claim:**
+
+| Topic | Status |
+|-------|--------|
+| Calibration leakage | Present in current fit-on-all-overlap design |
+| In-sample baseline/anomaly | Present |
+| Missing vs zero fire activity | Not modeled |
+| Sensor resolution differences | Partially mitigated only if calibration is applied |
+| Confidence filtering | Optional; default keeps all mapped confidence levels |
+| March-only frontend demo | Committed `web/data/demo_calendar.json` |
+| Independent burned-area validation | **Not performed** |
+
+No validation results or performance numbers should be claimed until those modules are implemented and executed.

@@ -94,23 +94,36 @@ def export_demo_calendar_json(
     peaks: pd.DataFrame,
     out_path: Path,
     meta: dict,
+    provenance: dict | None = None,
 ) -> Path:
     """Write a compact JSON payload for the web demo."""
+    def _dataframe_records(df: pd.DataFrame) -> list:
+        # NaN → null; timestamps → ISO strings (valid JSON for the static demo).
+        return json.loads(df.to_json(orient="records", date_format="iso"))
+
+    meta_out = dict(meta)
+    if provenance is not None:
+        meta_out["provenance"] = provenance
+
     payload = {
-        "meta": meta,
-        "baseline": baseline.to_dict(orient="records"),
-        "weeks": scored.to_dict(orient="records"),
-        "critical_periods": critical.to_dict(orient="records"),
-        "peak_timing": peaks.to_dict(orient="records"),
+        "meta": meta_out,
+        "baseline": _dataframe_records(baseline),
+        "weeks": _dataframe_records(scored),
+        "critical_periods": _dataframe_records(critical),
+        "peak_timing": _dataframe_records(peaks),
     }
     # Native JSON types
     def _convert(obj):
         if isinstance(obj, (np.integer,)):
             return int(obj)
-        if isinstance(obj, (np.floating,)):
+        if isinstance(obj, (np.floating, float)):
+            if pd.isna(obj):
+                return None
             return float(obj)
         if isinstance(obj, (np.bool_,)):
             return bool(obj)
+        if isinstance(obj, pd.Timestamp):
+            return obj.date().isoformat()
         if pd.isna(obj):
             return None
         return obj
@@ -136,6 +149,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Optional path for web demo JSON (e.g. web/data/demo_calendar.json)",
     )
     parser.add_argument("--prefix", default="regional")
+    parser.add_argument(
+        "--provenance-input",
+        type=Path,
+        default=None,
+        help="Optional FIRMS CSV used to populate input hash and date range in JSON provenance",
+    )
+    parser.add_argument(
+        "--data-classification",
+        choices=("synthetic", "real_firms_csv"),
+        default=None,
+        help="Explicit data classification for JSON provenance (default: infer from --provenance-input)",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -155,6 +180,8 @@ def main(argv: list[str] | None = None) -> int:
     peaks.to_csv(peaks_path, index=False)
 
     if args.export_json is not None:
+        from .provenance import build_provenance
+
         years = sorted(scored["iso_year"].unique().tolist())
         meta = {
             "title": "Cauchy's Comet: The Burning Activity Calendar",
@@ -168,6 +195,17 @@ def main(argv: list[str] | None = None) -> int:
             ),
             "data_credit": "Data: NASA FIRMS (MODIS, VIIRS)",
         }
+        provenance = build_provenance(
+            input_path=args.provenance_input,
+            data_classification=args.data_classification,
+            firms_source="VIIRS_SNPP_SP",
+            calibration_applied=False,
+            pipeline_stages=[
+                "critical_periods",
+                "peak_timing",
+                "json_export",
+            ],
+        )
         export_demo_calendar_json(
             baseline=baseline,
             scored=scored,
@@ -175,6 +213,7 @@ def main(argv: list[str] | None = None) -> int:
             peaks=peaks,
             out_path=args.export_json,
             meta=meta,
+            provenance=provenance,
         )
 
     slope = peaks["peak_week_slope_per_year"].iloc[0] if len(peaks) else float("nan")
